@@ -40,6 +40,7 @@ set () {
 		case $1 in
 			--due)
 				# apparently arrays dont work like this but something equivilant needs to happen here
+				# but this might be a problem with my outdated version of bash on my mac
 				task[1]=$2
 				shift
 				shift;;
