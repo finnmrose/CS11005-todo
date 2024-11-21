@@ -2,6 +2,8 @@
 
 add () {
 	name=$1
+	# this doesnt work with names with spaces in them
+	# ie. "Task 1" becomes Task, 1
 	echo $name;
 	shift
 
@@ -20,7 +22,9 @@ add () {
 				# loop through args until one empty or one starts with "--"
 				# tags 
 				;;
-			*) echo "Unknown option: $1";;
+			*)
+				echo "Unknown option: $1"
+				shift;;
 		esac
 	done
 
