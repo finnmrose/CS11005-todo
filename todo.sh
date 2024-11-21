@@ -4,6 +4,7 @@ add () {
 	name=$1
 	# this doesnt work with names with spaces in them
 	# ie. "Task 1" becomes Task, 1
+	# but it looks like this might be another outdated bash thing
 	echo $name;
 	shift
 
