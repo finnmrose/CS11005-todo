@@ -1,15 +1,14 @@
 #!/bin/bash
 
 add () {
-	name=$1
+	name="$1"
+	tags=()
 	# this doesnt work with names with spaces in them
 	# ie. "Task 1" becomes Task, 1
-	# but it looks like this might be another outdated bash thing
 	echo $name;
 	shift
 
 	while [ $# -gt 0 ]; do
-		echo $1
 		case $1 in
 			--due)
 				due=$2
@@ -20,23 +19,33 @@ add () {
 				shift
 				shift;;
 			--tags)
-				# loop through args until one empty or one starts with "--"
-				# tags 
+				# loop through args until end or an arg starts with "--"
+				shift
+				while [ $# -gt 0 ]; do
+					# this is not quite right but grep doesn't like "grep "--""
+					if echo $1 | grep -qv "-"; then
+						tags=(${tags[@]} $1)
+						shift
+					else
+						break
+					fi
+				done
 				;;
 			*)
 				echo "Unknown option: $1"
-				shift;;
+				return 1;;
 		esac
 	done
 
-	echo "$name ${due:=$(date -I)} ${priority:=none} ${tags}"  >> $file
+	echo "$name ${due:=$(date -I)} ${priority:=none} ${tags[@]}"  >> $file
 }
 
 set () {
 	# a more secure search could be done here
 	# ie. searching for a task called "high" would match any task with priority high
-	task=$(grep $1 $file)
+	task=($(grep $1 $file))
 	shift
+	tags=(${task[@]:3})
 
 	# i don't like how this is exactly the same as add() but adding another function is strange
 	# maybe a global current task variable could be used to store parsed information?
@@ -44,8 +53,6 @@ set () {
 	while [ $# -gt 0 ]; do
 		case $1 in
 			--due)
-				# apparently arrays dont work like this but something equivilant needs to happen here
-				# but this might be a problem with my outdated version of bash on my mac
 				task[1]=$2
 				shift
 				shift;;
@@ -54,17 +61,26 @@ set () {
 				shift
 				shift;;
 			--tags)
+				tags=()
+				shift
+				while [ $# -gt 0 ]; do
+					if echo $1 | grep -qv "-"; then
+						tags=(${tags[@]} $1)
+						shift
+					else
+						break
+					fi
+				done
 				;;
-			*) echo "Unknown option: $1";;
+			*)
+				echo "Unknown option: $1"
+				return 1;;
 		esac
 	done
 	
-	for i in $task; do
-		echo $i
-	done
 	
-	# logic for actually replacing task needs to be done here
-	echo "${task}"
+	# logic for actually replacing the entry on file with this new one goes here
+	echo "${task[@]:0:3} ${tags[@]}"
 
 }
 
@@ -72,7 +88,8 @@ view () {
 	# logic for handling sorting and filtering goes here
 	# input looks something like ./todo.sh file --view --due 2024-12-1 --sort priority
 	# should show all tasks due on 1st Dec sorted by priority
-
+	# also could try and make it look pretty
+	
 	cat $file
 }
 
@@ -109,4 +126,9 @@ case $1 in
 		shift
 		complete $@;;
 esac
+
+if [ $? -gt 0 ]; then
+       echo "Something went wrong."
+fi
+
 
