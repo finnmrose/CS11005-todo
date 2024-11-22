@@ -87,7 +87,8 @@ set () {
 view () {
 	# logic for handling sorting and filtering goes here
 	# input looks something like ./todo.sh file --view --due 2024-12-1 --sort priority
-	# should show all tasks due on 1st Dec sorted by priority
+	# which should show all tasks due on 1st Dec sorted by priority
+	# try implementing ascending / descending sorting
 	# also could try and make it look pretty
 	
 	cat $file
@@ -96,13 +97,21 @@ view () {
 complete () {
 	# logic for completing tasks goes here
 	# perhaps this just adds a "complete" tag to the entry? (entries with this tag would be hidden by default when using --view)
-	# or it can remove the entry and add it to a seperate file?
-	# these are all part of the bonus feature about archiving completed tasks though so we could just do neither
 	# if completed task has a tag relating to recurrence (ie. "daily" or "weekly") add logic to add a new entry with updated date
 	
 	return 0;
 }
 
+
+# these two functions would be for adding and removing individual tags (as opposed to setting them all at once)
+# no idea how these would be implemented on the front end though (as in, what does adding a tag look like on the user's end)
+addtags () {
+
+}
+
+removetags () {
+
+}
 
 if [ $# -lt 2 ] ; then
 	echo "Too few arguments."
