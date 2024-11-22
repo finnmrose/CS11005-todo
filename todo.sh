@@ -99,18 +99,18 @@ complete () {
 	# perhaps this just adds a "complete" tag to the entry? (entries with this tag would be hidden by default when using --view)
 	# if completed task has a tag relating to recurrence (ie. "daily" or "weekly") add logic to add a new entry with updated date
 	
-	return 0;
+	return 0
 }
 
 
 # these two functions would be for adding and removing individual tags (as opposed to setting them all at once)
 # no idea how these would be implemented on the front end though (as in, what does adding a tag look like on the user's end)
 addtags () {
-
+	return 0
 }
 
 removetags () {
-
+	return 0
 }
 
 if [ $# -lt 2 ] ; then
