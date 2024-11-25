@@ -1,6 +1,6 @@
 #!/bin/bash
 
-add () {
+function add {
 	name="$1"
 	tags=()
 	# this doesnt work with names with spaces in them
@@ -40,7 +40,7 @@ add () {
 	echo "$name ${due:=$(date -I)} ${priority:=none} ${tags[@]}"  >> $file
 }
 
-set () {
+function set {
 	# a more secure search could be done here
 	# ie. searching for a task called "high" would match any task with priority high
 	task=($(grep $1 $file))
@@ -84,7 +84,7 @@ set () {
 
 }
 
-view () {
+function view {
 	# logic for handling sorting and filtering goes here
 	# input looks something like ./todo.sh file --view --due 2024-12-1 --sort priority
 	# which should show all tasks due on 1st Dec sorted by priority
@@ -94,7 +94,15 @@ view () {
 	cat $file
 }
 
-complete () {
+function addtags {
+	return 0
+}
+
+function removetags {
+	return 0
+}
+
+function complete {
 	# logic for completing tasks goes here
 	# perhaps this just adds a "complete" tag to the entry? (entries with this tag would be hidden by default when using --view)
 	# if completed task has a tag relating to recurrence (ie. "daily" or "weekly") add logic to add a new entry with updated date
@@ -102,15 +110,8 @@ complete () {
 	return 0
 }
 
-
-# these two functions would be for adding and removing individual tags (as opposed to setting them all at once)
-# no idea how these would be implemented on the front end though (as in, what does adding a tag look like on the user's end)
-addtags () {
-	return 0
-}
-
-removetags () {
-	return 0
+function search {
+	grep "$1" $file
 }
 
 if [ $# -lt 2 ] ; then
@@ -134,6 +135,9 @@ case $1 in
 	--complete)
 		shift
 		complete $@;;
+	--search)
+		shift
+		search $@;;
 esac
 
 if [ $? -gt 0 ]; then
