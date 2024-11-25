@@ -5,7 +5,6 @@ function add {
 	tags=()
 	# this doesnt work with names with spaces in them
 	# ie. "Task 1" becomes Task, 1
-	echo $name;
 	shift
 
 	while [ $# -gt 0 ]; do
@@ -23,6 +22,7 @@ function add {
 				shift
 				while [ $# -gt 0 ]; do
 					# this is not quite right but grep doesn't like "grep "--""
+					# but it is good enough for now
 					if echo $1 | grep -qv "-"; then
 						tags=(${tags[@]} $1)
 						shift
@@ -38,6 +38,8 @@ function add {
 	done
 
 	echo "$name ${due:=$(date -I)} ${priority:=none} ${tags[@]}"  >> $file
+	
+	return 0
 }
 
 function set {
@@ -77,11 +79,16 @@ function set {
 				return 1;;
 		esac
 	done
+		
+	sed -i "" "/${task[0]}/d" $file
 	
-	
-	# logic for actually replacing the entry on file with this new one goes here
-	echo "${task[@]:0:3} ${tags[@]}"
+	# wouldn't want to append to a file if the previous entry hasn't been removed successfully
+	if [ $? -eq 0 ]; then
+		echo "${task[@]:0:3} ${tags[@]}" >> $file
+		return 0
+	fi
 
+	return 1
 }
 
 function view {
@@ -92,13 +99,33 @@ function view {
 	# also could try and make it look pretty
 	
 	cat $file
+
+	return 0
 }
 
 function addtags {
+	task=($(grep $1 $file))
+	shift
+	tags=(${task[@]:3})
+
+	while [ $# -gt 0 ]; do
+		tags=(${tags[@]} $1)
+		shift
+	done
+
+	set ${task[0]} --tags ${tags[*]}
+	
 	return 0
 }
 
 function removetags {
+	task=($(grep $1 $file))
+	shift
+	tags=(${task[@]:3})
+
+	# damn this is harder than it looks
+
+
 	return 0
 }
 
@@ -110,8 +137,24 @@ function complete {
 	return 0
 }
 
+function tag {
+	case $2 in
+		--add)
+			addtags $1 ${@:3};;
+		--remove)
+			removetags $1 ${@:3};;
+		*)
+			echo "Unknown option: $2"
+			return 1;;
+	esac
+	
+	return 0
+}
+
 function search {
-	grep "$1" $file
+	grep $1 $file
+
+	return 0
 }
 
 if [ $# -lt 2 ] ; then
@@ -138,6 +181,9 @@ case $1 in
 	--search)
 		shift
 		search $@;;
+	--tags)
+		shift
+		tag $@;;
 esac
 
 if [ $? -gt 0 ]; then
