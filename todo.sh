@@ -122,10 +122,17 @@ function removetags {
 	task=($(grep $1 $file))
 	shift
 	tags=(${task[@]:3})
+	
+	for arg in $@; do
+		# this shit doesn't work!!!
+		# not that it would even be logically correct if it did
+		tags=${tags//$arg}
+	done
 
-	# damn this is harder than it looks
-
-
+	echo ${tags[*]}
+	
+	# set ${task[0]} --tags ${tags[*]}
+		
 	return 0
 }
 
@@ -157,6 +164,10 @@ function search {
 	return 0
 }
 
+function remove {
+	sed -i "" "/$1/d" $file
+}
+
 if [ $# -lt 2 ] ; then
 	echo "Too few arguments."
 	exit 1
@@ -184,6 +195,9 @@ case $1 in
 	--tags)
 		shift
 		tag $@;;
+	--remove)
+		shift
+		remove $@;;
 esac
 
 if [ $? -gt 0 ]; then
