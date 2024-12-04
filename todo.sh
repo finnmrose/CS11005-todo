@@ -97,6 +97,7 @@ function view {
 	# which should show all tasks due on 1st Dec sorted by priority
 	# try implementing ascending / descending sorting
 	# also could try and make it look pretty
+ 	#started working on this not very familar with github, ive downloaded the file and am working on it from my system will update on github when i get everything working - oliver
 	
 	cat $file
 
