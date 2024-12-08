@@ -92,14 +92,83 @@ function set {
 }
 
 function view {
-	# logic for handling sorting and filtering goes here
-	# input looks something like ./todo.sh file --view --due 2024-12-1 --sort priority
-	# which should show all tasks due on 1st Dec sorted by priority
+	
+	#everything works when i use cmd  ./todo.sh todo.txt --view todo.txt --due <date>
+	#but then i get the final error message "something went wrong"
+ 	#it wasnt register any arguments before the --view so i repeat the todo.txt - its work so i didnt change it
 	# try implementing ascending / descending sorting
 	# also could try and make it look pretty
- 	#started working on this not very familar with github, ive downloaded the file and am working on it from my system will update on github when i get everything working - oliver
+
 	
-	cat $file
+	
+	echo "Arguments: $@" #displays how many arguments its receives || #with ./todo.sh file --view --due<date> it was only receiving the arguments --due and the date 
+	echo "Number of arguments: $#" #displays what arguments were recevied
+
+
+	#initalising variables
+	todo_file=$1
+	due_flag=$2
+	target_date=$3
+	high=()
+	medium=()
+	low=()
+	high_counter=0
+	medium_counter=0
+	low_counter=0
+ 
+
+
+
+	#checks if the file given exists
+	if [ ! -f "$todo_file" ]; then
+		echo "File '$todo_file' not found!"
+		exit 1
+	fi
+
+ 	#reads through file
+  	#and stores each set of data in an array which correponds to its priority type
+	while IFS=' ' read -r task date priority tag
+	do
+		if [ "$date" == "$target_date" ]; then
+			
+			if [ "$priority" == "high" ]; then
+				high[$counter_high]="$task $date $priority $tag"
+				((counter_high++))
+			elif [ "$priority" == "medium" ]; then
+				medium[$counter_medium]="$task $date $priority $tag"
+				((counter_medium++))
+			else
+				low[$counter_low]="$task $date $priority $tag"
+				((counter_low++))
+			fi
+		fi
+	done < "$todo_file"
+
+	#displaying all the arrays
+	echo ""
+
+	echo "High Priority Tasks:"
+	for task in "${high[@]}"; do
+		echo "$task"
+	done
+
+	echo ""
+
+	echo "Medium Priority Tasks:"
+	for task in "${medium[@]}"; do
+		echo "$task"
+	done
+
+ 	#doesnt look good yet but at least it works
+
+	echo ""
+
+	echo "Low Priority Tasks:"
+	for task in "${low[@]}"; do
+		echo "$task"
+	done
+
+
 
 	return 0
 }
