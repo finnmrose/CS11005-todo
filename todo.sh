@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 function add {
@@ -38,7 +39,7 @@ function add {
 	done
 
 	echo "$name ${due:=$(date -I)} ${priority:=none} ${tags[@]}"  >> $file
-	
+
 	return 0
 }
 
@@ -92,83 +93,240 @@ function set {
 }
 
 function view {
-	
-	#everything works when i use cmd  ./todo.sh file --view file --due <date>
-	#but then i get the final error message "something went wrong"
- 	#it wasnt register any arguments before the --view so i repeat the file - its work so i didnt change it
+	# logic for handling sorting and filtering goes here
+	# input looks something like ./todo.sh file --view file --due <date> 
+	# which should show all tasks due on 1st Dec sorted by priority
 	# try implementing ascending / descending sorting
 	# also could try and make it look pretty
-	#just read the updated read me going to update it today hopefully (9/12/24)
+
+	
+	while [[ $# -gt 0 ]]; do
+		case "$1" in
+			--viewFile) 
+				display "$file"
+				shift
+				shift;;
+			--sort)
+				shift
+				if [[ "$1" ==  "due" ]]; then
+					sort_task "$file" 2 "$2"
+				elif  [[ "$1" == "priority" ]]; then
+					sort_task "$file" 3 "$2"
+				fi
+				shift;;
+			--due)
+				shift
+				due_date="$1"
+				filter_due_date "$file" "$due_date"
+				shift
+				;;
+			--priority)
+				shift
+				filter_priority "$file" "$1"
+				shift
+				;;
+			--tags)
+				shift
+				filter_tags "$file" "$1"
+				shift
+				;;
+			*)
+				echo "Unknown option: $1"
+				shift
+				;;
+		esac
+	done
+
 	
 	
-	echo "Arguments: $@" #displays how many arguments its receives || #with ./todo.sh file --view --due<date> it was only receiving the arguments --due and the date 
-	echo "Number of arguments: $#" #displays what arguments were recevied
 
 
-	#initalising variables
+
+
+	#everything works when i use cmd  ./todo.sh todo.txt --view todo.txt --due <date>
+	#but then i get the final error message
+	#now i need to sort it by priority
+	#if priority == high
+	#then store $task in  the high array
+	#3 arrays - high, medium, low
+	#the priority of the task corrsponds to the array
+	#store the task name in the corresponding array
+	#display the arrays in order (high, med etc)
+	#implement ascending order
+	#progresssssssss
+
+
+	return 0
+
+}
+
+
+function filter_due_date {
+
 	todo_file=$1
-	due_flag=$2
-	target_date=$3
+	target_date=$2
 	high=()
 	medium=()
 	low=()
 	high_counter=0
 	medium_counter=0
 	low_counter=0
- 
 
 
 
-	#checks if the file given exists
 	if [ ! -f "$todo_file" ]; then
 		echo "File '$todo_file' not found!"
 		exit 1
 	fi
-
- 	#reads through file
-  	#and stores each set of data in an array which correponds to its priority type
+	
 	while IFS=' ' read -r task date priority tag
 	do
 		if [ "$date" == "$target_date" ]; then
-			
+
 			if [ "$priority" == "high" ]; then
 				high[$counter_high]="$task $date $priority $tag"
 				((counter_high++))
 			elif [ "$priority" == "medium" ]; then
 				medium[$counter_medium]="$task $date $priority $tag"
 				((counter_medium++))
-			else
 				low[$counter_low]="$task $date $priority $tag"
 				((counter_low++))
 			fi
 		fi
 	done < "$todo_file"
 
-	#displaying all the arrays
-	echo ""
 
+	separator="-----------------------------------------"
+
+
+	echo ""
+	echo "$separator"
 	echo "High Priority Tasks:"
+	echo "$separator"
+	echo ""
 	for task in "${high[@]}"; do
-		echo "$task"
+		echo "  - $task"
 	done
 
 	echo ""
+	
 
+	echo "$separator"
 	echo "Medium Priority Tasks:"
+	echo "$separator"
+	echo ""
 	for task in "${medium[@]}"; do
-		echo "$task"
+		echo "  - $task"
 	done
-
- 	#doesnt look good yet but at least it works
+	
 
 	echo ""
 
+
+	echo "$separator"
 	echo "Low Priority Tasks:"
+	echo "$separator"
+	echo ""
 	for task in "${low[@]}"; do
+		echo "  - $task"
+	done
+	
+	echo ""
+
+
+
+
+	return 0
+}
+
+
+
+function sort_task {
+
+	todo_file=$1
+	field=$2
+	order=$3
+	
+	separator="-------------------------------------------------"
+
+
+	if [[ "$order" == "asc" ]]; then
+		sorted_tasks=$(sort -k"$field" "$todo_file")
+	elif [[ "$order" == "des" ]]; then
+		sorted_tasks=$(sort -k"$field" -r "$todo_file")
+	fi
+
+
+	echo ""
+	echo "$separator"
+	echo "Displaying the tasks sorted by $field in $order order"
+	echo "$separator"
+	while IFS= read -r task; do
+		echo "   - $task"
+	done <<< "$sorted_tasks"
+	echo ""
+	#will display unknown option asc/dec idk why
+
+	return 0
+}
+
+function filter_priority {
+
+	todo_file="$1"
+	priority_level="$2"
+	priorities=()
+	separator="-----------------------------"
+	while IFS=' ' read -r task date priority tag
+	do
+		if [ "$priority" == "$priority_level" ]; then
+			priorities+=("$task $date $priority $tag")
+		fi
+	done < "$todo_file"
+	echo ""
+	echo "$separator"
+	echo "Tasks with $priority_level priority:"
+	echo "$separator"
+	for task in "${priorities[@]}"; do
 		echo "$task"
 	done
+	echo ""
+
+	return 0
+}
+
+function display {
+	
+	todo_file="$1"
+	separator="-------------------------------"
+	echo "$separator"
+	echo "Displaying the file $todo_file"
+	echo "$separator"
+	cat "$todo_file"
+	echo ""
+	return 0
+}
 
 
+function filter_tags {
+
+	todo_file="$1"
+	tagToCheck="$2"
+	tagged=()
+	separator="---------------------------------"
+	while IFS=' ' read -r task date priority tag
+	do
+		if [ "$tagToCheck" ==  "$tag" ]; then
+			tagged+=("$task $date $priority $tag")
+		fi
+	done < "$todo_file"
+	echo ""
+	echo "$separator"
+	echo "Tasks with the tag $tagToCheck:"
+	echo "$separator"
+	for task in "${tagged[@]}"; do
+		echo "$task"
+	done
+	echo ""
 
 	return 0
 }
@@ -249,29 +407,36 @@ shift
 case $1 in
 	--add)
 		shift
-		add $@;;
+		add $@ ;;
 	--set)
 		shift
-		set $@;;
-	--view) 
+		set $@ ;;
+	--view)
 		shift
-		view $@;;
+		view $@ ;;
 	--complete)
 		shift
-		complete $@;;
+		complete $@ ;;
 	--search)
 		shift
-		search $@;;
+		search $@ ;;
 	--tags)
 		shift
-		tag $@;;
+		tag $@ ;;
 	--remove)
 		shift
-		remove $@;;
+		remove $@ ;;
+	*)
+		echo "Unknown option: $1"
+		exit 1 ;;
+
 esac
 
-if [ $? -gt 0 ]; then
-       echo "Something went wrong."
+if [ $# -gt 0 ]; then
+	echo "Something went wrong."
+	exit 1
 fi
+
+
 
 
