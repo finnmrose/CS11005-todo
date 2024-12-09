@@ -93,12 +93,12 @@ function set {
 
 function view {
 	
-	#everything works when i use cmd  ./todo.sh todo.txt --view todo.txt --due <date>
+	#everything works when i use cmd  ./todo.sh file --view file --due <date>
 	#but then i get the final error message "something went wrong"
- 	#it wasnt register any arguments before the --view so i repeat the todo.txt - its work so i didnt change it
+ 	#it wasnt register any arguments before the --view so i repeat the file - its work so i didnt change it
 	# try implementing ascending / descending sorting
 	# also could try and make it look pretty
-
+	#just read the updated read me going to update it today hopefully (9/12/24)
 	
 	
 	echo "Arguments: $@" #displays how many arguments its receives || #with ./todo.sh file --view --due<date> it was only receiving the arguments --due and the date 
