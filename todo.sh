@@ -23,7 +23,7 @@ function add {
 				while [ $# -gt 0 ]; do
 					# this is not quite right but grep doesn't like "grep "--""
 					# but it is good enough for now
-					if echo $1 | grep -qv "-"; then
+					if echo $1 | grep -qve '--'; then
 						tags=(${tags[@]} $1)
 						shift
 					else
@@ -73,7 +73,7 @@ function set {
 				tags=()
 				shift
 				while [ $# -gt 0 ]; do
-					if echo $1 | grep -qv "-"; then
+					if echo $1 | grep -qve '--'; then
 						tags=(${tags[@]} $1)
 						shift
 					else
@@ -411,7 +411,6 @@ function complete {
 			# and it definitely works here
 			daily)
 				due=$(date -v +1d -jf "%F" $due "+%F")
-				echo "add ${task[0]} --due ${due} --priority ${task[2]} --tags ${tags[*]}"
 				add ${task[0]} --due ${due} --priority ${task[2]} --tags ${tags[*]};;	
 			weekly)
 				due=$(date -v +1w -jf "%F" $due "+%F")
@@ -467,7 +466,6 @@ shift
 case $1 in
 	--add)
 		shift
-		echo "add $@"
 		add $@;;
 	--set)
 		shift
