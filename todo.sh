@@ -93,15 +93,243 @@ function set {
 
 function view {
 	# logic for handling sorting and filtering goes here
-	# input looks something like ./todo.sh file --view --due 2024-12-1 --sort priority
+	# input looks something like ./todo.sh file --view file --due <date> 
 	# which should show all tasks due on 1st Dec sorted by priority
 	# try implementing ascending / descending sorting
 	# also could try and make it look pretty
+
 	
-	cat $file
+	while [[ $# -gt 0 ]]; do
+		case "$1" in
+			--viewFile) 
+				display "$file"
+				shift
+				shift;;
+			--sort)
+				shift
+				if [[ "$1" ==  "due" ]]; then
+					sort_task "$file" 2 "$2"
+				elif  [[ "$1" == "priority" ]]; then
+					sort_task "$file" 3 "$2"
+				fi
+				shift;;
+			--due)
+				shift
+				due_date="$1"
+				filter_due_date "$file" "$due_date"
+				shift
+				;;
+			--priority)
+				shift
+				filter_priority "$file" "$1"
+				shift
+				;;
+			--tags)
+				shift
+				filter_tags "$file" "$1"
+				shift
+				;;
+			*)
+				echo "Unknown option: $1"
+				shift
+				;;
+		esac
+	done
+
+	
+	
+
+
+
+
+	#everything works when i use cmd  ./todo.sh todo.txt --view todo.txt --due <date>
+	#but then i get the final error message
+	#now i need to sort it by priority
+	#if priority == high
+	#then store $task in  the high array
+	#3 arrays - high, medium, low
+	#the priority of the task corrsponds to the array
+	#store the task name in the corresponding array
+	#display the arrays in order (high, med etc)
+	#implement ascending order
+	#progresssssssss
+
+
+	return 0
+
+}
+
+
+function filter_due_date {
+
+	todo_file=$1
+	target_date=$2
+	high=()
+	medium=()
+	low=()
+	high_counter=0
+	medium_counter=0
+	low_counter=0
+
+
+
+	if [ ! -f "$todo_file" ]; then
+		echo "File '$todo_file' not found!"
+		exit 1
+	fi
+	
+	while IFS=' ' read -r task date priority tag
+	do
+		if [ "$date" == "$target_date" ]; then
+
+			if [ "$priority" == "high" ]; then
+				high[$counter_high]="$task $date $priority $tag"
+				((counter_high++))
+			elif [ "$priority" == "medium" ]; then
+				medium[$counter_medium]="$task $date $priority $tag"
+				((counter_medium++))
+				low[$counter_low]="$task $date $priority $tag"
+				((counter_low++))
+			fi
+		fi
+	done < "$todo_file"
+
+
+	separator="-----------------------------------------"
+
+
+	echo ""
+	echo "$separator"
+	echo "High Priority Tasks:"
+	echo "$separator"
+	echo ""
+	for task in "${high[@]}"; do
+		echo "  - $task"
+	done
+
+	echo ""
+	
+
+	echo "$separator"
+	echo "Medium Priority Tasks:"
+	echo "$separator"
+	echo ""
+	for task in "${medium[@]}"; do
+		echo "  - $task"
+	done
+	
+
+	echo ""
+
+
+	echo "$separator"
+	echo "Low Priority Tasks:"
+	echo "$separator"
+	echo ""
+	for task in "${low[@]}"; do
+		echo "  - $task"
+	done
+	
+	echo ""
+
+
+
 
 	return 0
 }
+
+
+
+function sort_task {
+
+	todo_file=$1
+	field=$2
+	order=$3
+	
+	separator="-------------------------------------------------"
+
+
+	if [[ "$order" == "asc" ]]; then
+		sorted_tasks=$(sort -k"$field" "$todo_file")
+	elif [[ "$order" == "des" ]]; then
+		sorted_tasks=$(sort -k"$field" -r "$todo_file")
+	fi
+
+
+	echo ""
+	echo "$separator"
+	echo "Displaying the tasks sorted by $field in $order order"
+	echo "$separator"
+	while IFS= read -r task; do
+		echo "   - $task"
+	done <<< "$sorted_tasks"
+	echo ""
+	#will display unknown option asc/dec idk why
+
+	return 0
+}
+
+function filter_priority {
+
+	todo_file="$1"
+	priority_level="$2"
+	priorities=()
+	separator="-----------------------------"
+	while IFS=' ' read -r task date priority tag
+	do
+		if [ "$priority" == "$priority_level" ]; then
+			priorities+=("$task $date $priority $tag")
+		fi
+	done < "$todo_file"
+	echo ""
+	echo "$separator"
+	echo "Tasks with $priority_level priority:"
+	echo "$separator"
+	for task in "${priorities[@]}"; do
+		echo "$task"
+	done
+	echo ""
+
+	return 0
+}
+
+function display {
+	
+	todo_file="$1"
+	separator="-------------------------------"
+	echo "$separator"
+	echo "Displaying the file $todo_file"
+	echo "$separator"
+	cat "$todo_file"
+	echo ""
+	return 0
+}
+
+
+function filter_tags {
+
+	todo_file="$1"
+	tagToCheck="$2"
+	tagged=()
+	separator="---------------------------------"
+	while IFS=' ' read -r task date priority tag
+	do
+		if [ "$tagToCheck" ==  "$tag" ]; then
+			tagged+=("$task $date $priority $tag")
+		fi
+	done < "$todo_file"
+	echo ""
+	echo "$separator"
+	echo "Tasks with the tag $tagToCheck:"
+	echo "$separator"
+	for task in "${tagged[@]}"; do
+		echo "$task"
+	done
+	echo ""
+
+	return 0
+}
+
 
 function addtags {
 	task=($(grep $1 $file))
