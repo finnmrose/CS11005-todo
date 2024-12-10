@@ -1,45 +1,8 @@
-NAME
-	todo.sh - command line to-do list manager
-SYNOPSIS
-	todo.sh file [action] [action args]
-DESCRIPTION
-
-ACTIONS
-	--add taskName data
-		Adds a task called taskName to the given to-do list.
-		Populates the entry with the given information.
-		DATA FORMAT
-			--due date
-				Sets the due date of the task.
-				Defaults to the current date.
-			--priority level
-				Sets the priority of the task.
-				Defaults to "None".
-			--tags [tags]
-				Sets the tags of the task.
-				Multiple tags may be set at once.
-				Defaults to no tags.
-	--set TaskName data
-		Sets the data of a task already in the given to-do list.
-		Data format matches the --add action.
-	--view [options]
-		Displays the given to-do list.
-		OPTIONS
-			--sort attribute
-				Sorts the displayed table by the given attribute.
-			--due date
-				Only displays tasks with a due date matching the given argument.
-			--priority level
-				Only displays tasks with a priority matching the given argument.
-			--tags [tags]
-				Only displays tasks matching one or more of the given arguments.
-	--tags taskName [action] [action args]
-		Modifies the tags of the given task.
-		ACTIONS
-			--add [tags]
-				Adds the given tags to the given task.
-			--remove [tags]
-				Removes the given tags from the given task.
-EXIT STATUS
-	0, if command completed with no problems.
-	1, if an error was detected during execution.
+Examples:
+<br>  1 - Adding a task)         ./todo.sh file --add taskName --due 2024-12-1 --priority low --tags personal monthly
+<br>  2 - Modifying a task)      ./todo.sh file --set taskName --priority medium
+<br>  3 - Viewing all due tasks) ./todo.sh file --view
+<br>  4 - Adding tags)           ./todo.sh file --tags taskName --add tag1 tag2
+<br>  5 - Removing tags)         ./todo.sh file --tags taskName --remove tag1 tag2
+<br>  6 - Removing a task)       ./todo.sh file --remove taskName
+<br>  7 - Searching for a task)  ./todo.sh file --search taskName
