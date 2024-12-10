@@ -21,8 +21,6 @@ function add {
 				# loop through args until end or an arg starts with "--"
 				shift
 				while [ $# -gt 0 ]; do
-					# this is not quite right but grep doesn't like "grep "--""
-					# but it is good enough for now
 					if echo $1 | grep -qve '--'; then
 						tags=(${tags[@]} $1)
 						shift
@@ -414,10 +412,10 @@ function complete {
 				add ${task[0]} --due ${due} --priority ${task[2]} --tags ${tags[*]};;	
 			weekly)
 				due=$(date -v +1w -jf "%F" $due "+%F")
-				echo $due;;
+				add ${task[0]} --due ${due} --priority ${task[2]} --tags ${tags[*]};;
 			monthly)
 				due=$(date -v +1m -jf "%F" $due "+%F")
-				echo $due;;
+				add ${task[0]} --due ${due} --priority ${task[2]} --tags ${tags[*]};;
 		esac
 	done
 
