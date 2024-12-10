@@ -3,7 +3,8 @@ NAME
 SYNOPSIS
 	todo.sh file [action] [action args]
 DESCRIPTION
-
+	A command line application for managing to-do lists.
+	Users can add, remove, modify, search, sort and filter tasks.
 ACTIONS
 	--add taskName data
 		Adds a task called taskName to the given to-do list.
@@ -29,7 +30,7 @@ ACTIONS
 				Sorts the displayed table by the given attribute.
 			--due date
 				Only displays tasks with a due date matching the given argument.
-			--priority level
+			--priority level	
 				Only displays tasks with a priority matching the given argument.
 			--tags [tags]
 				Only displays tasks matching one or more of the given arguments.
