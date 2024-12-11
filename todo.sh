@@ -44,9 +44,9 @@ function set {
 	# this search needs to lookbehind for a newline and also ignore any lines with a complete tag
 	# but man regex is difficult
 	# this new regex needs to be used at every point where this search appears (set, addtags, removetags, complete)
-	task=($(grep $1 $file))
+	task=($(grep "^$1" $file | grep -v "complete"))
 
-	c=$(grep -c $1 $file)
+	c=$(grep "^$1" $file | grep -vc "complete")
 	if [ $c -ne 1 ] ; then
 		echo "Search failed. Found $c matching entries."
 		return 1
@@ -85,7 +85,7 @@ function set {
 		esac
 	done
 		
-	sed -i "" "/${task[0]}/d" $file
+	sed -i "" "/^${task[0]}/d" $file
 	
 	# wouldn't want to append to a file if the previous entry hasn't been removed successfully
 	if [ $? -eq 0 ]; then
@@ -337,8 +337,8 @@ function filter_tags {
 
 
 function addtags {
-	task=($(grep $1 $file))
-	c=$(grep -c $1 $file)
+	task=($(grep "^$1" $file | grep -v "complete"))
+	c=$(grep "^$1" $file | grep -vc "complete")
 	if [ $c -ne 1 ] ; then
 		echo "Search failed. Found $c matching entries."
 		return 1
@@ -357,8 +357,8 @@ function addtags {
 }
 
 function removetags {
-	task=($(grep $1 $file))
-	c=$(grep -c $1 $file)
+	task=($(grep "^$1" $file | grep -v "complete"))
+	c=$(grep "^$1" $file | grep -vc "complete")
 	if [ $c -ne 1 ] ; then
 		echo "Search failed. Found $c matching entries."
 		return 1
@@ -386,8 +386,8 @@ function complete {
 	
 	# input looks like ./todo.sh file --complete taskName
 		
-	task=($(grep $1 $file))
-	c=$(grep -c $1 $file)
+	task=($(grep "^$1" $file | grep -v "complete"))
+	c=$(grep "^$1" $file | grep -vc "complete")
 	if [ $c -ne 1 ] ; then
 		echo "Search failed. Found $c matching entries."
 		return 1
@@ -402,29 +402,24 @@ function complete {
 		echo "$1 already completed."
 		return 1
 	fi
-
+	
+	tag $1 --add complete
+	
 	for tag in ${tags[@]}; do
 		case $tag in
 			# this might be mac exclusive but thats what im working with
 			# and it definitely works here
 			daily)
 				due=$(date -v +1d -jf "%F" $due "+%F")
-				add ${task[0]} --due ${due} --priority ${task[2]} --tags ${tags[*]};;	
+				add ${task[0]} --due ${due} --priority ${task[2]} --tags ${tags[@]::((${#tags[@]}-1))};;	
 			weekly)
 				due=$(date -v +1w -jf "%F" $due "+%F")
-				add ${task[0]} --due ${due} --priority ${task[2]} --tags ${tags[*]};;
+				add ${task[0]} --due ${due} --priority ${task[2]} --tags ${tags[@]::((${#tags[@]}-1))};;
 			monthly)
 				due=$(date -v +1m -jf "%F" $due "+%F")
-				add ${task[0]} --due ${due} --priority ${task[2]} --tags ${tags[*]};;
+				add ${task[0]} --due ${due} --priority ${task[2]} --tags ${tags[@]::((${#tags[@]}-1))};;
 		esac
 	done
-
-	# dont complete task if something went wrong
-		
-	if [ $? -eq 0 ] ; then
-		tag $1 --add complete	
-		return 0
-	fi
 
 	return 1
 }
