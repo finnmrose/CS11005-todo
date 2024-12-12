@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 function add {
@@ -36,7 +37,7 @@ function add {
 	done
 
 	echo "$name ${due:=$(date -I)} ${priority:=none} ${tags[@]}"  >> $file
-	
+
 	return 0
 }
 
@@ -103,19 +104,34 @@ function view {
 	# try implementing ascending / descending sorting
 	# also could try and make it look pretty
 
-	
+
+
+
+
+
+	#PLAN:
+	#allow for users to sort each of the catogories by due date or priority
+	#if a user has asked for a file to be sorted sort then display
+	#else just use the display 
+	#should make the display function able to display the output of arrays - COMPLETE
+	#would be the code more effiecent and readable - COMPLETE
+	#potentially only use the display to output things to the user - COMPLETE
+
+
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
-			--viewFile) 
+			--viewFile)
 				display "$file"
+				echo "Arguments: $@"
 				shift
-				shift;;
+				shift
+				;;
 			--sort)
 				shift
 				if [[ "$1" ==  "due" ]]; then
-					sort_task "$file" 2 "$2"
+					sort_task_date "$file" "$2"  #make due date filter
 				elif  [[ "$1" == "priority" ]]; then
-					sort_task "$file" 3 "$2"
+					sort_task_priority "$file" "$2"
 				fi
 				shift;;
 			--due)
@@ -140,11 +156,6 @@ function view {
 				;;
 		esac
 	done
-
-	
-	
-
-
 
 
 	#everything works when i use cmd  ./todo.sh todo.txt --view todo.txt --due <date>
@@ -200,76 +211,69 @@ function filter_due_date {
 	done < "$todo_file"
 
 
-	separator="-----------------------------------------"
-
-
-	echo ""
-	echo "$separator"
-	echo "High Priority Tasks:"
-	echo "$separator"
-	echo ""
-	for task in "${high[@]}"; do
-		echo "  - $task"
-	done
-
-	echo ""
-	
-
-	echo "$separator"
-	echo "Medium Priority Tasks:"
-	echo "$separator"
-	echo ""
-	for task in "${medium[@]}"; do
-		echo "  - $task"
-	done
-	
-
-	echo ""
-
-
-	echo "$separator"
-	echo "Low Priority Tasks:"
-	echo "$separator"
-	echo ""
-	for task in "${low[@]}"; do
-		echo "  - $task"
-	done
-	
-	echo ""
-
-
-
+	display "$todo_file" "High Priority Tasks:" "${high[@]}"
+	display "$todo_file" "Medium Priority Tasks:" "${medium[@]}"
+	display "$todo_file" "Low Priority Tasks:" "$low[@]}"
 
 	return 0
 }
 
+#define tasks as all the content in the file
+#loop for the lenght of tasks
+#if asc/des
+#asc if priority = high top of array
+#to do this we would
+#go through the tasks array if high place in array
+#loop through again if prioity = medium place in array
+#etc
+#for des vice versa
+
+function sort_task_priority {
+
+	todo_file="$1"
+	order="$2"
+	high=()
+	medium=()
+	low=()
+	high_counter=0
+	medium_counter=0
+	low_counter=0
+
+	while IFS=' ' read -r task date priority tag
+	do
+
+		if [ "$priority" == "high" ]; then
+			high[$counter_high]="$task $date $priority $tag"
+			((counter_high++))
+		elif [ "$priority" == "medium" ]; then
+			medium[$counter_medium]="$task $date $priority $tag"
+			((counter_medium++))
+
+		else
+			low[$counter_low]="$task $date $priority $tag"
+			((counter_low++))
+		fi
+	done < "$todo_file"
 
 
-function sort_task {
 
-	todo_file=$1
-	field=$2
-	order=$3
-	
-	separator="-------------------------------------------------"
+
 
 
 	if [[ "$order" == "asc" ]]; then
-		sorted_tasks=$(sort -k"$field" "$todo_file")
+		echo ""
+		echo "Displaying the tasks via ascending priority"
+		display "$todo_file" "Priority low:" "${low[@]}"
+		display "$todo_file" "Priority medium:" "${medium[@]}"
+		display "$todo_file" "Priority high:" "${high[@]}"
 	elif [[ "$order" == "des" ]]; then
-		sorted_tasks=$(sort -k"$field" -r "$todo_file")
+		echo ""
+		echo "Displaying the tasks via descending priority"
+		display "$todo_file" "Priority high:" "${high[@]}"
+		display "$todo_file" "Priority medium:" "${medium[@]}"
+		display "$todo_file" "Priority low:" "${low[@]}"
 	fi
 
-
-	echo ""
-	echo "$separator"
-	echo "Displaying the tasks sorted by $field in $order order"
-	echo "$separator"
-	while IFS= read -r task; do
-		echo "   - $task"
-	done <<< "$sorted_tasks"
-	echo ""
-	#will display unknown option asc/dec idk why
 
 	return 0
 }
@@ -279,34 +283,45 @@ function filter_priority {
 	todo_file="$1"
 	priority_level="$2"
 	priorities=()
-	separator="-----------------------------"
-	while IFS=' ' read -r task date priority tag
+
+	while IFS=" " read -r task date priority tag;
 	do
 		if [ "$priority" == "$priority_level" ]; then
 			priorities+=("$task $date $priority $tag")
 		fi
 	done < "$todo_file"
-	echo ""
-	echo "$separator"
-	echo "Tasks with $priority_level priority:"
-	echo "$separator"
-	for task in "${priorities[@]}"; do
-		echo "$task"
-	done
-	echo ""
+
+	ToBeDisplayed="Tasks with $priority_level priority"
+	display "$todo_file" "$ToBeDisplayed" "${priorities[@]}"
 
 	return 0
 }
 
 function display {
-	
-	todo_file="$1"
-	separator="-------------------------------"
+	#https://stackoverflow.com/questions/17232526/how-to-pass-an-array-argument-to-the-bash-script
+	separator="------------------------------------------------------------------"
+	todo_file="$1";shift
+	displayName="$1"; shift
+	array_to_display=("$@")
+
+	if [ "$#" -eq 1 ]; then
 	echo "$separator"
 	echo "Displaying the file $todo_file"
 	echo "$separator"
 	cat "$todo_file"
 	echo ""
+
+	elif [ "$#" -gt 1 ]; then
+		echo ""
+		echo "$separator"
+		echo "$displayName"
+		echo "$separator"
+		for task in "${array_to_display[@]}"; do
+			echo "     - $task"
+		done
+		echo ""
+	fi
+	echo "$separator"
 	return 0
 }
 
@@ -316,21 +331,31 @@ function filter_tags {
 	todo_file="$1"
 	tagToCheck="$2"
 	tagged=()
-	separator="---------------------------------"
 	while IFS=' ' read -r task date priority tag
 	do
 		if [ "$tagToCheck" ==  "$tag" ]; then
 			tagged+=("$task $date $priority $tag")
 		fi
 	done < "$todo_file"
-	echo ""
-	echo "$separator"
-	echo "Tasks with the tag $tagToCheck:"
-	echo "$separator"
-	for task in "${tagged[@]}"; do
-		echo "$task"
-	done
-	echo ""
+
+	ToBeDisplayed="Tasks with the tag $tagToCheck:"
+	display "$todo_file" "$ToBeDisplayed" "${tagged[@]}"
+
+	return 0
+}
+
+function sort_task_date {
+	#https://www.geeksforgeeks.org/mapfile-command-in-linux-with-examples/ (mapfile) cmd
+	todo_file="$1"
+	order="$2"
+
+	if [[ "$order" == "des" ]]; then
+		mapfile -t sorted_tasks < <(sort -t' ' -k2,2 -r "$todo_file")
+		display "$todo_file" "The tasks filtered by date in descending order:" "${sorted_tasks[@]}"
+	else
+		mapfile -t sorted_tasks < <(sort -t' ' -k2,2 "$todo_file")
+		display "$todo_file" "The tasks filtered by date in ascending order:" "${sorted_tasks[@]}"
+	fi
 
 	return 0
 }
@@ -352,7 +377,7 @@ function addtags {
 	done
 
 	set ${task[0]} --tags ${tags[*]}
-	
+
 	return 0
 }
 
@@ -459,27 +484,30 @@ shift
 case $1 in
 	--add)
 		shift
-		add $@;;
+		add $@ ;;
 	--set)
 		shift
-		set $@;;
-	--view) 
+		set $@ ;;
+	--view)
 		shift
-		view $@;;
+		view $@ ;;
 	--complete)
 		shift
-		complete $@;;
+		complete $@ ;;
 	--search)
 		shift
-		search $@;;
+		search $@ ;;
 	--tags)
 		shift
-		tag $@;;
+		tag $@ ;;
 	--remove)
 		shift
-		remove $@;;
-esac
+		remove $@ ;;
+	*)
+		echo "Unknown option: $1"
+		exit 1 ;;
 
+esac
 
 if [ $? -eq 1 ]; then
 	# functions return 1 if they print their own error message
