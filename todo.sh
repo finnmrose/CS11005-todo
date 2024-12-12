@@ -22,9 +22,7 @@ function add {
 				# loop through args until end or an arg starts with "--"
 				shift
 				while [ $# -gt 0 ]; do
-					# this is not quite right but grep doesn't like "grep "--""
-					# but it is good enough for now
-					if echo $1 | grep -qv "-"; then
+					if echo $1 | grep -qve '--'; then
 						tags=(${tags[@]} $1)
 						shift
 					else
@@ -44,9 +42,16 @@ function add {
 }
 
 function set {
-	# a more secure search could be done here
-	# ie. searching for a task called "high" would match any task with priority high
-	task=($(grep $1 $file))
+	# this search needs to lookbehind for a newline and also ignore any lines with a complete tag
+	# but man regex is difficult
+	# this new regex needs to be used at every point where this search appears (set, addtags, removetags, complete)
+	task=($(grep "^$1" $file | grep -v "complete"))
+
+	c=$(grep "^$1" $file | grep -vc "complete")
+	if [ $c -ne 1 ] ; then
+		echo "Search failed. Found $c matching entries."
+		return 1
+	fi
 	shift
 	tags=(${task[@]:3})
 
@@ -67,7 +72,7 @@ function set {
 				tags=()
 				shift
 				while [ $# -gt 0 ]; do
-					if echo $1 | grep -qv "-"; then
+					if echo $1 | grep -qve '--'; then
 						tags=(${tags[@]} $1)
 						shift
 					else
@@ -81,7 +86,7 @@ function set {
 		esac
 	done
 		
-	sed -i "" "/${task[0]}/d" $file
+	sed -i "" "/^${task[0]}/d" $file
 	
 	# wouldn't want to append to a file if the previous entry hasn't been removed successfully
 	if [ $? -eq 0 ]; then
@@ -151,11 +156,6 @@ function view {
 				;;
 		esac
 	done
-
-	
-	
-
-
 
 
 	#everything works when i use cmd  ./todo.sh todo.txt --view todo.txt --due <date>
@@ -360,8 +360,14 @@ function sort_task_date {
 	return 0
 }
 
+
 function addtags {
-	task=($(grep $1 $file))
+	task=($(grep "^$1" $file | grep -v "complete"))
+	c=$(grep "^$1" $file | grep -vc "complete")
+	if [ $c -ne 1 ] ; then
+		echo "Search failed. Found $c matching entries."
+		return 1
+	fi
 	shift
 	tags=(${task[@]:3})
 
@@ -376,7 +382,12 @@ function addtags {
 }
 
 function removetags {
-	task=($(grep $1 $file))
+	task=($(grep "^$1" $file | grep -v "complete"))
+	c=$(grep "^$1" $file | grep -vc "complete")
+	if [ $c -ne 1 ] ; then
+		echo "Search failed. Found $c matching entries."
+		return 1
+	fi
 	shift
 	tags=(${task[@]:3})
 	
@@ -398,7 +409,44 @@ function complete {
 	# perhaps this just adds a "complete" tag to the entry? (entries with this tag would be hidden by default when using --view)
 	# if completed task has a tag relating to recurrence (ie. "daily" or "weekly") add logic to add a new entry with updated date
 	
-	return 0
+	# input looks like ./todo.sh file --complete taskName
+		
+	task=($(grep "^$1" $file | grep -v "complete"))
+	c=$(grep "^$1" $file | grep -vc "complete")
+	if [ $c -ne 1 ] ; then
+		echo "Search failed. Found $c matching entries."
+		return 1
+	fi
+	tags=(${task[@]:3})
+	due=${task[@]:1:1}
+	
+	# this returns true if the complete tag is already within the array of tags
+	# i got this from https://stackoverflow.com/questions/3685970/check-if-a-bash-array-contains-a-value
+
+	if [[ " ${tags[*]} " =~ [[:space:]]complete[[:space:]] ]] ; then
+		echo "$1 already completed."
+		return 1
+	fi
+	
+	tag $1 --add complete
+	
+	for tag in ${tags[@]}; do
+		case $tag in
+			# this might be mac exclusive but thats what im working with
+			# and it definitely works here
+			daily)
+				due=$(date -v +1d -jf "%F" $due "+%F")
+				add ${task[0]} --due ${due} --priority ${task[2]} --tags ${tags[@]::((${#tags[@]}-1))};;	
+			weekly)
+				due=$(date -v +1w -jf "%F" $due "+%F")
+				add ${task[0]} --due ${due} --priority ${task[2]} --tags ${tags[@]::((${#tags[@]}-1))};;
+			monthly)
+				due=$(date -v +1m -jf "%F" $due "+%F")
+				add ${task[0]} --due ${due} --priority ${task[2]} --tags ${tags[@]::((${#tags[@]}-1))};;
+		esac
+	done
+
+	return 1
 }
 
 function tag {
@@ -461,11 +509,13 @@ case $1 in
 
 esac
 
-if [ $# -gt 0 ]; then
-	echo "Something went wrong."
+if [ $? -eq 1 ]; then
+	# functions return 1 if they print their own error message
+	exit 1
+elif [ $? -gt 1 ]; then
+	# generic error message if function returns > 1 (hopefully unused)
+        echo "Something went wrong."
 	exit 1
 fi
 
-
-
-
+exit 0
