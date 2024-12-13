@@ -5,7 +5,7 @@ function add {
 	name="$1"
 	tags=()
 	# this doesnt work with names with spaces in them
-	# ie. "Task 1" becomes Task, 1
+	# e.g. "Task 1" becomes Task, 1
 	shift
 
 	while [ $# -gt 0 ]; do
@@ -20,6 +20,7 @@ function add {
 				shift;;
 			--tags)
 				# loop through args until end or an arg starts with "--"
+				# i.e. the next argument is not a tag
 				shift
 				while [ $# -gt 0 ]; do
 					if echo $1 | grep -qve '--'; then
@@ -42,9 +43,6 @@ function add {
 }
 
 function set {
-	# this search needs to lookbehind for a newline and also ignore any lines with a complete tag
-	# but man regex is difficult
-	# this new regex needs to be used at every point where this search appears (set, addtags, removetags, complete)
 	task=($(grep "^$1" $file | grep -v "complete"))
 
 	c=$(grep "^$1" $file | grep -vc "complete")
@@ -54,9 +52,6 @@ function set {
 	fi
 	shift
 	tags=(${task[@]:3})
-
-	# i don't like how this is exactly the same as add() but adding another function is strange
-	# maybe a global current task variable could be used to store parsed information?
 
 	while [ $# -gt 0 ]; do
 		case $1 in
@@ -85,7 +80,12 @@ function set {
 				return 1;;
 		esac
 	done
-		
+
+	# the exact regex i want here is: "^${task[0]}(?!.*complete)"
+	# to remove any line that begins with the relevant task name and ignores all completed tasks
+	# but it seems that bash cant do negative lookahead by itself
+	# this is still pretty close but it will remove any completed entries of a recurring task
+			
 	sed -i "" "/^${task[0]}/d" $file
 	
 	# wouldn't want to append to a file if the previous entry hasn't been removed successfully
@@ -361,7 +361,7 @@ function sort_task_date {
 }
 
 
-function addtags {
+function add_tags {
 	task=($(grep "^$1" $file | grep -v "complete"))
 	c=$(grep "^$1" $file | grep -vc "complete")
 	if [ $c -ne 1 ] ; then
@@ -381,7 +381,7 @@ function addtags {
 	return 0
 }
 
-function removetags {
+function remove_tags {
 	task=($(grep "^$1" $file | grep -v "complete"))
 	c=$(grep "^$1" $file | grep -vc "complete")
 	if [ $c -ne 1 ] ; then
@@ -391,15 +391,19 @@ function removetags {
 	shift
 	tags=(${task[@]:3})
 	
-	for arg in $@; do
-		# this shit doesn't work!!!
-		# not that it would even be logically correct if it did
-		tags=${tags//$arg}
+	# doing it this way so each entry is considered seperately
+	# e.g. removing "c" from tags "abc bc c" results in "abc bc" not "ab b"
+	# does hurt me that the number of iterations is (tags * deletions) not just (no. of deletions)
+	# which a replacement like ${tags[@]/delete} would be but whatever
+	for delete in $@; do
+		for i in ${!tags[@]}; do
+			if [[ ${tags[i]} == $delete ]]; then
+				unset 'tags[i]'
+			fi
+		done
 	done
-
-	echo ${tags[*]}
 	
-	# set ${task[0]} --tags ${tags[*]}
+	set ${task[0]} --tags ${tags[*]}
 		
 	return 0
 }
@@ -421,7 +425,6 @@ function complete {
 	due=${task[@]:1:1}
 	
 	# this returns true if the complete tag is already within the array of tags
-	# i got this from https://stackoverflow.com/questions/3685970/check-if-a-bash-array-contains-a-value
 
 	if [[ " ${tags[*]} " =~ [[:space:]]complete[[:space:]] ]] ; then
 		echo "$1 already completed."
@@ -434,6 +437,10 @@ function complete {
 		case $tag in
 			# this might be mac exclusive but thats what im working with
 			# and it definitely works here
+			# the linux equilivant seems to be:
+			# due=$(date -d "$due +1d" +"%F") for adding 1 day to the current value of $due
+			# or something like that
+
 			daily)
 				due=$(date -v +1d -jf "%F" $due "+%F")
 				add ${task[0]} --due ${due} --priority ${task[2]} --tags ${tags[@]::((${#tags[@]}-1))};;	
@@ -446,15 +453,15 @@ function complete {
 		esac
 	done
 
-	return 1
+	return 0
 }
 
 function tag {
 	case $2 in
 		--add)
-			addtags $1 ${@:3};;
+			add_tags $1 ${@:3};;
 		--remove)
-			removetags $1 ${@:3};;
+			remove_tags $1 ${@:3};;
 		*)
 			echo "Unknown option: $2"
 			return 1;;
@@ -470,7 +477,7 @@ function search {
 }
 
 function remove {
-	sed -i "" "/$1/d" $file
+	sed -i "" "/^$1/d" $file
 }
 
 if [ $# -lt 2 ] ; then
@@ -515,7 +522,7 @@ if [ $? -eq 1 ]; then
 elif [ $? -gt 1 ]; then
 	# generic error message if function returns > 1 (hopefully unused)
         echo "Something went wrong."
-	exit 1
+	exit 2
 fi
 
 exit 0
