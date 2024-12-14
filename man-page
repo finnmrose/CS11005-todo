@@ -41,6 +41,12 @@ ACTIONS
 				Adds the given tags to the given task.
 			--remove [tags]
 				Removes the given tags from the given task.
+	--complete taskName
+		Adds the complete tag to the given task and creates a new task if recurrence tag is present.
+	--search regex
+		Displays any tasks matching the given regex.
+	--remove taskName
+		Removes the task from the current list.
 EXIT STATUS
 	0, if command completed with no problems.
 	1, if an error was detected during execution.
