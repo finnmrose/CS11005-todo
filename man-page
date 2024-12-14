@@ -27,14 +27,19 @@ ACTIONS
 		Displays the given to-do list.
 		OPTIONS
 			--viewFile
+				Displays the choosen file.
 
-			--sort
-				
+			--sort [due/priority]
+				Sorts tasks by due date or priority level.
+
 			--due date
+				Displays all days for a specific due date.
 				
 			--priority level	
+				Displays all tasks with a specific priority level.
 				
 			--tags [tags]
+				Displays all tasks with a specific tag.
 
 	--tags taskName [action] [action args]
 		Modifies the tags of the given task.
