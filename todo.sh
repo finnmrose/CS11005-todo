@@ -98,54 +98,41 @@ function set {
 }
 
 function view {
-	# logic for handling sorting and filtering goes here
+	# logic for handling sorting and filtering
 	# input looks something like ./todo.sh file --view file --due <date> 
-	# which should show all tasks due on 1st Dec sorted by priority
-	# try implementing ascending / descending sorting
-	# also could try and make it look pretty
+	# =shows all tasks due on 1st Dec sorted by priority
+	
 
-
-
-
-
-
-	#PLAN:
-	#allow for users to sort each of the catogories by due date or priority
-	#if a user has asked for a file to be sorted sort then display
-	#else just use the display 
-	#should make the display function able to display the output of arrays - COMPLETE
-	#would be the code more effiecent and readable - COMPLETE
-	#potentially only use the display to output things to the user - COMPLETE
-
-
-	while [[ $# -gt 0 ]]; do
-		case "$1" in
-			--viewFile)
-				display "$file"
-				echo "Arguments: $@"
+	
+	while [[ $# -gt 0 ]]; do #loops trhough the command line arguments
+		case "$1" in #checks if the $1 = viewFile etc
+			--viewFile) #command line looks like ./todo.sh <file> --viewFile
+				display "$file" #displays the file inputed by the user
 				shift
 				shift
 				;;
-			--sort)
-				shift
-				if [[ "$1" ==  "due" ]]; then
-					sort_task_date "$file" "$2"  #make due date filter
+			--sort) #command line looks like ./todo.sh <file> --sort <due/priority> <asc/des>
+				shift 
+    				#checks if the user wants to sort by the date or priority
+				if [[ "$1" ==  "due" ]]; then 
+					sort_task_date "$file" "$2"  #calls the sort date method passes passing it the file details and des/asc information
 				elif  [[ "$1" == "priority" ]]; then
-					sort_task_priority "$file" "$2"
+					sort_task_priority "$file" "$2" #calls the sort priority method and passes it the file details and des/asc information
 				fi
 				shift;;
-			--due)
+			--due) #commmand line looks like ./todo.sh <file> --due <date> 
+   				#date format = YYYY/MM/DD
 				shift
 				due_date="$1"
-				filter_due_date "$file" "$due_date"
+				filter_due_date "$file" "$due_date" #passes the file name and date requested by user to the function
 				shift
 				;;
-			--priority)
+			--priority)  #commmand line looks like ./todo.sh <file> --priority <priority level e.g. 'high'>
 				shift
-				filter_priority "$file" "$1"
+				filter_priority "$file" "$1" #passes file name and data requested by user to the function
 				shift
 				;;
-			--tags)
+			--tags) #commmand line looks like ./todo.sh <file> --tags <the tag name e.g. 'work'>
 				shift
 				filter_tags "$file" "$1"
 				shift
@@ -158,18 +145,6 @@ function view {
 	done
 
 
-	#everything works when i use cmd  ./todo.sh todo.txt --view todo.txt --due <date>
-	#but then i get the final error message
-	#now i need to sort it by priority
-	#if priority == high
-	#then store $task in  the high array
-	#3 arrays - high, medium, low
-	#the priority of the task corrsponds to the array
-	#store the task name in the corresponding array
-	#display the arrays in order (high, med etc)
-	#implement ascending order
-	#progresssssssss
-
 
 	return 0
 
@@ -177,7 +152,9 @@ function view {
 
 
 function filter_due_date {
+#aims to display all the tasks on a date the user has requested
 
+	#intialising variables
 	todo_file=$1
 	target_date=$2
 	high=()
@@ -188,19 +165,21 @@ function filter_due_date {
 	low_counter=0
 
 
-
+	#checks if the file exists
 	if [ ! -f "$todo_file" ]; then
 		echo "File '$todo_file' not found!"
 		exit 1
 	fi
-	
-	while IFS=' ' read -r task date priority tag
-	do
-		if [ "$date" == "$target_date" ]; then
 
-			if [ "$priority" == "high" ]; then
-				high[$counter_high]="$task $date $priority $tag"
-				((counter_high++))
+ 
+	while IFS=' ' read -r task date priority tag #reads line from the file and splits into 4 different fields
+	do
+		if [ "$date" == "$target_date" ]; then #checks if the date of the tasks is = to the date requested by the user
+
+   			#filtering by priority
+			if [ "$priority" == "high" ]; then 
+				high[$counter_high]="$task $date $priority $tag" #if the task matches the priority level its added to the array of corresponding to the priority level
+				((counter_high++)) #increasig the position in the array
 			elif [ "$priority" == "medium" ]; then
 				medium[$counter_medium]="$task $date $priority $tag"
 				((counter_medium++))
@@ -208,9 +187,9 @@ function filter_due_date {
 				((counter_low++))
 			fi
 		fi
-	done < "$todo_file"
+	done < "$todo_file" 
 
-
+	#calls display function and passes the filename and arrays contained the tasks filtered by date and sorted by priority
 	display "$todo_file" "High Priority Tasks:" "${high[@]}"
 	display "$todo_file" "Medium Priority Tasks:" "${medium[@]}"
 	display "$todo_file" "Low Priority Tasks:" "$low[@]}"
@@ -218,18 +197,11 @@ function filter_due_date {
 	return 0
 }
 
-#define tasks as all the content in the file
-#loop for the lenght of tasks
-#if asc/des
-#asc if priority = high top of array
-#to do this we would
-#go through the tasks array if high place in array
-#loop through again if prioity = medium place in array
-#etc
-#for des vice versa
 
 function sort_task_priority {
+#aims to sort all the tasks by the priority level
 
+	#initialising variables
 	todo_file="$1"
 	order="$2"
 	high=()
@@ -239,12 +211,13 @@ function sort_task_priority {
 	medium_counter=0
 	low_counter=0
 
+	#reads every line in the file and splits the data into 4 different fields
 	while IFS=' ' read -r task date priority tag
 	do
-
-		if [ "$priority" == "high" ]; then
-			high[$counter_high]="$task $date $priority $tag"
-			((counter_high++))
+		#filtering by priority
+		if [ "$priority" == "high" ]; then 
+			high[$counter_high]="$task $date $priority $tag"  #if the task matches the priority level its added to the array of corresponding to the priority level
+			((counter_high++)) #increasig the position in the array
 		elif [ "$priority" == "medium" ]; then
 			medium[$counter_medium]="$task $date $priority $tag"
 			((counter_medium++))
@@ -259,7 +232,8 @@ function sort_task_priority {
 
 
 
-
+	#sorting by ascending / descending order
+ 	#sends each of the arrays and filename and what the title of the output is, to the function display
 	if [[ "$order" == "asc" ]]; then
 		echo ""
 		echo "Displaying the tasks via ascending priority"
@@ -279,45 +253,52 @@ function sort_task_priority {
 }
 
 function filter_priority {
+#aims to filter tasks by a specific priority defined by the user	
 
+ 	#define variables
 	todo_file="$1"
 	priority_level="$2"
 	priorities=()
 
+	#reads every line in the file and splits the data into 4 different fields
 	while IFS=" " read -r task date priority tag;
 	do
-		if [ "$priority" == "$priority_level" ]; then
-			priorities+=("$task $date $priority $tag")
+		if [ "$priority" == "$priority_level" ]; then #checks if the priority of a task is = to the specific priority
+			priorities+=("$task $date $priority $tag") #if is append it to the array storing the similar priorities
 		fi
 	done < "$todo_file"
 
 	ToBeDisplayed="Tasks with $priority_level priority"
-	display "$todo_file" "$ToBeDisplayed" "${priorities[@]}"
+	display "$todo_file" "$ToBeDisplayed" "${priorities[@]}" #call display function and pass it required arguments
 
 	return 0
 }
 
 function display {
+#aims to display either an indiviaul files contents or an array containing specific data after being filtered from a file
+
 	#https://stackoverflow.com/questions/17232526/how-to-pass-an-array-argument-to-the-bash-script
 	separator="------------------------------------------------------------------"
 	todo_file="$1";shift
 	displayName="$1"; shift
-	array_to_display=("$@")
+	array_to_display=("$@") #adds remaining arguments to the array (an arrays contents are passed indiviually)
 
+
+	#checks if the number of arugments passed to the function is 1
 	if [ "$#" -eq 1 ]; then
 	echo "$separator"
-	echo "Displaying the file $todo_file"
+	echo "Displaying the file $todo_file" #displays contents of the file
 	echo "$separator"
 	cat "$todo_file"
 	echo ""
 
-	elif [ "$#" -gt 1 ]; then
+	elif [ "$#" -gt 1 ]; then #checks if number of arguments is greater than 1
 		echo ""
 		echo "$separator"
-		echo "$displayName"
+		echo "$displayName" #displays title of the information to be displayed
 		echo "$separator"
-		for task in "${array_to_display[@]}"; do
-			echo "     - $task"
+		for task in "${array_to_display[@]}"; do #loops throuhg the passed array
+			echo "     - $task" #displays content of the array
 		done
 		echo ""
 	fi
@@ -327,31 +308,39 @@ function display {
 
 
 function filter_tags {
+#aims to display all the tags with a specific filter
 
+ 	#defining variables
 	todo_file="$1"
 	tagToCheck="$2"
 	tagged=()
-	while IFS=' ' read -r task date priority tag
+
+  		
+	while IFS=' ' read -r task date priority tag #reads every line in the file and splits into 4 different fields
 	do
-		if [ "$tagToCheck" ==  "$tag" ]; then
-			tagged+=("$task $date $priority $tag")
+		if [ "$tagToCheck" ==  "$tag" ]; then #checks if the tag for the task is = to the specific tag
+			tagged+=("$task $date $priority $tag") #appends the task to the array storing tasks with the same tag
 		fi
 	done < "$todo_file"
 
-	ToBeDisplayed="Tasks with the tag $tagToCheck:"
-	display "$todo_file" "$ToBeDisplayed" "${tagged[@]}"
+	ToBeDisplayed="Tasks with the tag $tagToCheck:" 
+	display "$todo_file" "$ToBeDisplayed" "${tagged[@]}" #calls the dispaly function with the required arguments
 
 	return 0
 }
 
 function sort_task_date {
+#aims to sort all the tasks by date	
 	#https://www.geeksforgeeks.org/mapfile-command-in-linux-with-examples/ (mapfile) cmd
-	todo_file="$1"
+
+ 	#defining varaibles
+ 	todo_file="$1"
 	order="$2"
 
+	#checks if user wants the information to be displayed in ascending/descending order
 	if [[ "$order" == "des" ]]; then
-		mapfile -t sorted_tasks < <(sort -t' ' -k2,2 -r "$todo_file")
-		display "$todo_file" "The tasks filtered by date in descending order:" "${sorted_tasks[@]}"
+		mapfile -t sorted_tasks < <(sort -t' ' -k2,2 -r "$todo_file")	#sorts the data
+		display "$todo_file" "The tasks filtered by date in descending order:" "${sorted_tasks[@]}" #sends the requried data to the display function
 	else
 		mapfile -t sorted_tasks < <(sort -t' ' -k2,2 "$todo_file")
 		display "$todo_file" "The tasks filtered by date in ascending order:" "${sorted_tasks[@]}"
