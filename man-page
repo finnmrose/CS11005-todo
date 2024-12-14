@@ -26,14 +26,14 @@ ACTIONS
 	--view [options]
 		Displays the given to-do list.
 		OPTIONS
-			--sort attribute
-				Sorts the displayed table by the given attribute.
+			--sortFile
+				
 			--due date
-				Only displays tasks with a due date matching the given argument.
+				
 			--priority level	
-				Only displays tasks with a priority matching the given argument.
+				
 			--tags [tags]
-				Only displays tasks matching one or more of the given arguments.
+
 	--tags taskName [action] [action args]
 		Modifies the tags of the given task.
 		ACTIONS
