@@ -39,12 +39,16 @@ function add {
 
 	echo "$name ${due:=$(date -I)} ${priority:=none} ${tags[@]}"  >> $file
 
-	return 0
+	return #?
 }
 
 function set {
+	# completed tasks are just archives but share the same name
+	# so they are ignored when working on a preexisting task (set, add_tags, remove_tags)
 	task=($(grep "^$1" $file | grep -v "complete"))
 
+	# $c is the number of tasks found
+	# if $c != 1, the function wont work as intended since it assumes it finds one task
 	c=$(grep "^$1" $file | grep -vc "complete")
 	if [ $c -ne 1 ] ; then
 		echo "Search failed. Found $c matching entries."
@@ -100,9 +104,6 @@ function set {
 function view {
 	# logic for handling sorting and filtering
 	# input looks something like ./todo.sh file --view file --due <date> 
-	# =shows all tasks due on 1st Dec sorted by priority
-	
-
 	
 	while [[ $# -gt 0 ]]; do #loops trhough the command line arguments
 		case "$1" in #checks if the $1 = viewFile etc
@@ -351,6 +352,7 @@ function sort_task_date {
 
 
 function add_tags {
+	# this is exactly the same as --set
 	task=($(grep "^$1" $file | grep -v "complete"))
 	c=$(grep "^$1" $file | grep -vc "complete")
 	if [ $c -ne 1 ] ; then
@@ -371,6 +373,7 @@ function add_tags {
 }
 
 function remove_tags {
+	# this is exactly the same as --set
 	task=($(grep "^$1" $file | grep -v "complete"))
 	c=$(grep "^$1" $file | grep -vc "complete")
 	if [ $c -ne 1 ] ; then
@@ -382,8 +385,8 @@ function remove_tags {
 	
 	# doing it this way so each entry is considered seperately
 	# e.g. removing "c" from tags "abc bc c" results in "abc bc" not "ab b"
-	# does hurt me that the number of iterations is (tags * deletions) not just (no. of deletions)
-	# which a replacement like ${tags[@]/delete} would be but whatever
+	# does hurt that the number of iterations is (tags * deletions) not just (no. of deletions)
+	# which a replacement like ${tags[@]/delete} would be but it would be harder to handle entries seperately
 	for delete in $@; do
 		for i in ${!tags[@]}; do
 			if [[ ${tags[i]} == $delete ]]; then
@@ -397,13 +400,10 @@ function remove_tags {
 	return 0
 }
 
-function complete {
-	# logic for completing tasks goes here
-	# perhaps this just adds a "complete" tag to the entry? (entries with this tag would be hidden by default when using --view)
-	# if completed task has a tag relating to recurrence (ie. "daily" or "weekly") add logic to add a new entry with updated date
-	
+function complete {	
 	# input looks like ./todo.sh file --complete taskName
-		
+	
+	# exactly the same as set
 	task=($(grep "^$1" $file | grep -v "complete"))
 	c=$(grep "^$1" $file | grep -vc "complete")
 	if [ $c -ne 1 ] ; then
@@ -554,7 +554,7 @@ if [ $? -eq 1 ]; then
 	# functions return 1 if they print their own error message
 	exit 1
 elif [ $? -gt 1 ]; then
-	# generic error message if function returns > 1 (hopefully unused)
+	# generic error message if function returns > 1 (hopefully this never happens)
         echo "Something went wrong."
 	exit 2
 fi
