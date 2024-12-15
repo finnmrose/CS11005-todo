@@ -445,6 +445,48 @@ function complete {
 	return 0
 }
 
+function calendar {
+
+ 	todo_file="$1"
+  	month=${2:-$(date +%m)}
+   	year=${3:-$(date +%Y)}
+
+    	if [ ! -f "$todo_file" ]; then
+     		echo "File '$todo_file' not found"
+       		exit 1
+	fi
+
+ 	tasks=$(awk -v month="$month" -v year="$year" '
+  		BEGIN { FS =" " }
+    		{
+      			split($2, date_parts, "-")
+	 		if (date_parts[1] == year && date_parts[2] == sprintf("%2d", month)) {
+    				print $2
+			}
+   		}
+     	' "$todo_file")
+
+    	echo ""
+    	echo "Tasks for $month/$year:"
+     	cal "$month" "$year" | awk -v tasks="$tasks" '
+      		BEGIN { split(tasks, task_list, "\n") }
+		{
+  			# Highlight dates with tasks 
+     			for (i in task_list) {
+				task_date = task_list[i]
+    				task_day = int(substr(task_date, 9, 2)) 
+
+ 				if ($0 ~ "\\<"task_day"\\>") {
+     					gsub("\\<"task_day"\\>", task_day"*")
+	  			}
+      			}
+	 		print
+    		}
+      	'
+       echo ""
+       echo "Key: *indicates due tasks"
+      
+
 function tag {
 	case $2 in
 		--add)
@@ -499,6 +541,9 @@ case $1 in
 	--remove)
 		shift
 		remove $@ ;;
+  	--calendar)
+   		shift
+     		calendar $@ ;;
 	*)
 		echo "Unknown option: $1"
 		exit 1 ;;
