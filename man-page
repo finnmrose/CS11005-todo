@@ -54,6 +54,8 @@ ACTIONS
 		Displays any tasks matching the given regex.
 	--remove taskName
 		Removes the task from the current list.
+	--calendar taskName
+		Displays a calendar-based view of due tasks for a given month and year
 EXIT STATUS
 	0, if command completed with no problems.
 	1, if an error was detected during execution.
