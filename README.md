@@ -6,3 +6,4 @@ Examples:
 <br>  5 - Removing tags)         ./todo.sh file --tags taskName --remove tag1 tag2
 <br>  6 - Removing a task)       ./todo.sh file --remove taskName
 <br>  7 - Searching for a task)  ./todo.sh file --search taskName
+<br>  8 - Viewing Calendar)      ./todo.sh file --calendar 
