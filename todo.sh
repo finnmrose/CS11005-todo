@@ -485,7 +485,7 @@ function calendar {
       	'
        echo ""
        echo "Key: *indicates due tasks"
-      
+}      
 
 function tag {
 	case $2 in
