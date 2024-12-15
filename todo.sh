@@ -424,7 +424,7 @@ function complete {
 	
 	for tag in ${tags[@]}; do
 		case $tag in
-			# this might be mac exclusive but thats what im working with
+			# this might be macos exclusive but thats all ive got
 			# and it definitely works here
 			# the linux equilivant seems to be:
 			# due=$(date -d "$due +1d" +"%F") for adding 1 day to the current value of $due
